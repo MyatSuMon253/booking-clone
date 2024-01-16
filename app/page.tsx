@@ -1,4 +1,4 @@
-import Image from 'next/image'
+import Image from "next/image";
 
 export default function Home() {
   return (
@@ -9,8 +9,14 @@ export default function Home() {
           Search low prices on hotels, homes and much more...
         </h3>
       </section>
-      <section>
+      <section className="m-4 mt-0 -mb-14 px-2 lg:px-4">
         {/* search form*/}
+      </section>
+      <section className="mx-auto max-w-7xl -mt-10 p-6 bg-white rounded-t-lg">
+        <div className="pt-5">
+          <h3 className="text-xl font-bold">Trending Destinations</h3>
+          <p className="font-light">Most Popular </p>
+        </div>
       </section>
     </main>
   );
