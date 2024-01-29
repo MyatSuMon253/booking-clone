@@ -13,14 +13,19 @@ import {
   FormLabel,
   FormMessage,
 } from "./ui/form";
-import { BedDoubleIcon } from "lucide-react";
+import { BedDoubleIcon, CalendarIcon } from "lucide-react";
 import { Input } from "./ui/input";
+import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
+import { Calendar } from "./ui/calendar";
+import { format } from "date-fns";
+import { Button } from "./ui/button";
+import { cn } from "@/lib/utils";
 
 export const formSchema = z.object({
   location: z.string().min(2).max(50),
   dates: z.object({
-    from: z.date(),
-    to: z.date(),
+    from: z.date({ required_error: "Please select a check-in date" }),
+    to: z.date({ required_error: "Please select a check-out date" }),
   }),
   adults: z
     .string()
@@ -47,7 +52,27 @@ const SearchForm = () => {
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {}
+  function onSubmit(values: z.infer<typeof formSchema>) {
+    const checkinMonthDay = values.dates.from.getDate().toString();
+    const checkinMonth = values.dates.from.getMonth().toString();
+    const checkinYear = values.dates.from.getFullYear().toString();
+    const checkoutMonthDay = values.dates.to.getDate().toString();
+    const checkoutMonth = (values.dates.to.getMonth() + 1).toString();
+    const checkoutYear = values.dates.to.getFullYear().toString();
+
+    const checkin = `${checkinYear}-${checkinMonth}-${checkinMonthDay}`;
+    const checkout = `${checkoutYear}-${checkoutMonth}-${checkoutMonthDay}`;
+
+    const url = new URL("https://www.booking.com/searchresults.html");
+    url.searchParams.set("ss", values.location);
+    url.searchParams.set("group_adults", values.adults);
+    url.searchParams.set("group_children", values.children);
+    url.searchParams.set("no_rooms", values.rooms);
+    url.searchParams.set("checkin", checkin);
+    url.searchParams.set("checkout", checkout);
+
+    router.push(`/search?url=${url.href}`);
+  }
 
   return (
     <Form {...form}>
@@ -72,6 +97,115 @@ const SearchForm = () => {
               </FormItem>
             )}
           />
+        </div>
+        <div className="grid w-full lg:max-w-sm flex-1 items-center gap-1.5">
+          <FormField
+            control={form.control}
+            name="dates"
+            render={({ field }) => (
+              <FormItem className="flex flex-col">
+                <FormLabel className="text-white">Dates</FormLabel>
+                <FormMessage />
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <FormControl>
+                      <Button
+                        id="date"
+                        name="dates"
+                        variant={"outline"}
+                        className={cn(
+                          "w-full lg:w-[300px] justify-start text-left font-normal",
+                          !field.value.from && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-3 h-4 w-4 opacity-50" />
+                        {field.value?.from ? (
+                          field.value?.to ? (
+                            <>
+                              {format(field.value?.from, "LLL dd, y")} -{" "}
+                              {format(field.value?.to, "LLL dd, y")}
+                            </>
+                          ) : (
+                            format(field.value?.from, "LLL dd, y")
+                          )
+                        ) : (
+                          <span>Select your dates</span>
+                        )}
+                      </Button>
+                    </FormControl>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      initialFocus
+                      mode="range"
+                      selected={field.value}
+                      defaultMonth={field.value.from}
+                      onSelect={field.onChange}
+                      numberOfMonths={2}
+                      disabled={(date) =>
+                        date < new Date(new Date().setHours(0, 0, 0, 0))
+                      }
+                    />
+                  </PopoverContent>
+                </Popover>
+              </FormItem>
+            )}
+          />
+        </div>
+        <div className="flex w-full items-center space-x-2">
+          <div className="grid items-center flex-1">
+            <FormField
+              control={form.control}
+              name="adults"
+              render={({ field }) => (
+                <FormItem className="flex flex-col">
+                  <FormLabel className="text-white">Adults</FormLabel>
+                  <FormMessage />
+                  <FormControl>
+                    <Input type="number" placeholder="Adults" {...field} />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+          </div>
+          <div className="grid items-center flex-1">
+            <FormField
+              control={form.control}
+              name="children"
+              render={({ field }) => (
+                <FormItem className="flex flex-col">
+                  <FormLabel className="text-white">Children</FormLabel>
+                  <FormMessage />
+                  <FormControl>
+                    <Input type="number" placeholder="Children" {...field} />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+          </div>
+          <div className="grid items-center flex-1">
+            <FormField
+              control={form.control}
+              name="rooms"
+              render={({ field }) => (
+                <FormItem className="flex flex-col">
+                  <FormLabel className="text-white">Rooms</FormLabel>
+                  <FormMessage />
+                  <FormControl>
+                    <Input type="number" placeholder="rooms" {...field} />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+          </div>
+          <div className="mt-auto">
+            <Button
+              type="submit"
+              className="bg-blue-500 hover:bg-blue-600 text-base"
+            >
+              Search
+            </Button>
+          </div>
         </div>
       </form>
     </Form>
